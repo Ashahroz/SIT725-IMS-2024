@@ -1,24 +1,24 @@
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
 }
+
 const express = require('express');
 const app = express();
-const dotenv = require('dotenv');
-const urlencodedToJSON = require('./middlewares/urlencodedToJSON');
-const { isAuthenticated } = require('./middlewares/auth');
-
+const authRoutes = require('./routes/auth');
+app.use(express.urlencoded({ extended: true })); // Add this line to parse urlencoded form data
 app.use(express.json());
-app.use(urlencodedToJSON); // Include the middleware for parsing URL-encoded data
-var port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000; // Changed var to const for port
 
 app.use(express.static('public'));
+app.use('/', authRoutes);
 
-app.get('/', (req, res) => {
-    res.render('login.ejs', { messages: { error: '' } });
-});
+// TODO: Implement SESSION
 
-app.post('/login', isAuthenticated, (req, res) => {
-    res.redirect('/home');
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
 });
 
 // Start the server

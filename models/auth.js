@@ -17,16 +17,16 @@ async function hashPassword(password) {
 }
 
 // Middleware function to authenticate user
-async function isAuthenticated(req, res, next) {
+async function isAuthenticated(req) {
     try {
         const { email, password } = req.body;
+        console.log('Body:', req.body)
         const client = await connectDatabase();
         const user = await client.db('IMS').collection('admin').findOne({ email });
-
         if (!user || !password) {
-            return res.status(401).json({ error: 'Unauthorized' });
+            console.log('User not found or password not provided');
+            return false;
         }
-
         const hashedInputPassword = await hashPassword(password);
 
         // Debugging
@@ -37,14 +37,10 @@ async function isAuthenticated(req, res, next) {
 
         const passwordMatch = await bcrypt.compare(password, user.password);
 
-        if (passwordMatch) {
-            next();
-        } else {
-            res.status(401).json({ error: 'Unauthorized' });
-        }
+        return passwordMatch;
     } catch (error) {
-        console.error('Error in isAuthenticated middleware:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error in isAuthenticated:', error);
+        throw error;
     }
 }
 
